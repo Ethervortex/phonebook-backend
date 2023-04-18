@@ -1,4 +1,5 @@
 // Tehtävä 3.13 -
+require('dotenv').config()
 const mongoose = require('mongoose')
 
 mongoose.set('strictQuery', false)
