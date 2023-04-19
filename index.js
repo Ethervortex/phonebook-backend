@@ -40,6 +40,7 @@ const errorHandler = (error, request, response, next) => {
     return response.status(400).json({ error: error.message })
   }
   next(error)
+  return response.status(500).json({ error: error.message }) // korjaus virheiden näyttämiseen
 }
 
 app.use(errorHandler)
