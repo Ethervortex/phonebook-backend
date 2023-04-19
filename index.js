@@ -31,6 +31,20 @@ app.use(morgan((tokens, request, response) => {
   }
 }))
 
+// Tehtävä 3.16
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
+  next(error)
+  //return response.status(500).json({ error: error.message }) // korjaus virheiden näyttämiseen
+}
+
+app.use(errorHandler)
+
 // Tehtävä 3.14: lisää nimi tietokantaan
 app.post('/api/persons', (request, response, next) => {
   const newPerson = request.body
@@ -62,19 +76,6 @@ app.put('/api/persons/:id', (request, response, next) => {
     .catch(error => next(error))
 })
 
-// Tehtävä 3.16
-const errorHandler = (error, request, response, next) => {
-  console.error(error.message)
-  if (error.name === 'CastError') {
-    return response.status(400).send({ error: 'malformatted id' })
-  } else if (error.name === 'ValidationError') {
-    return response.status(400).json({ error: error.message })
-  }
-  next(error)
-  //return response.status(500).json({ error: error.message }) // korjaus virheiden näyttämiseen
-}
-
-app.use(errorHandler)
 
 // Tehtävä 3.13: nimet tietokannasta
 app.get('/api/persons', (request, response) => {
