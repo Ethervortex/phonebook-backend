@@ -15,18 +15,20 @@ app.use(cors())
 const postaus = ':method :url :status :res[content-length] - :response-time ms :post-data'
 const muut = ':method :url :status :res[content-length] - :response-time ms'
 morgan.token('post-data', (request, response) => {
-    if (request.method === 'POST') {
-        const { id, ...rest } = request.body
-        return JSON.stringify(rest)
-    }
+  console.log(response)
+  if (request.method === 'POST') {
+    // eslint-disable-next-line no-unused-vars
+    const { id, ...rest } = request.body // id ei käytössä
+    return JSON.stringify(rest)
+  }
 })
 
 app.use(morgan((tokens, request, response) => {
-    if (request.method === 'POST') {
-        return morgan.compile(postaus)(tokens, request, response)
-    } else {
-        return morgan.compile(muut)(tokens, request, response)
-    }
+  if (request.method === 'POST') {
+    return morgan.compile(postaus)(tokens, request, response)
+  } else {
+    return morgan.compile(muut)(tokens, request, response)
+  }
 }))
 
 // Tehtävä 3.16
@@ -50,28 +52,43 @@ app.get('/api/persons', (request, response) => {
 })
 
 // Tehtävä 3.14: lisää nimi tietokantaan
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const newPerson = request.body
   console.log(newPerson)
+  /* Poistettu tehtävässä 3.19
   if (!newPerson.name || !newPerson.number) {
     return response.status(400).json({error: 'content missing'})
-  }
+  } */
   const person = new Person({
     name: newPerson.name,
     number: newPerson.number
   })
-  person.save().then(savedPerson => {
-    response.json(savedPerson)
-  })
+  person.save()
+    .then(savedPerson => {
+      response.json(savedPerson)
+    })
+    .catch(error => next(error)) // Tehtävä 3.19: nimi ja numerokenttien validointi
+})
+
+// Tehtävä 3.17: päivitä numero
+app.put('/api/persons/:id', (request, response, next) => {
+  const id = request.params.id
+  const newNumber = request.body.number
+  console.log(newNumber)
+  Person.findByIdAndUpdate(id, { number: newNumber }, { new: true, runValidators: true, context: 'query' }) // runValidators lisäys teht 3.19
+    .then(updated => {
+      response.json(updated)
+    })
+    .catch(error => next(error))
 })
 
 // Tehtävä 3.15: poisto
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndRemove(request.params.id)
-    .then(result => {
+    .then(() => { // result ei käytössä
       response.status(204).end()
     })
-    .catch(error => next(error))   
+    .catch(error => next(error))
 })
 
 // Tehtävä 3.18
@@ -121,7 +138,7 @@ let persons = [
     name: "Mary Poppendick",
     number: "39-23-654321"
   }
-] 
+]
 
 // Tehtävä 3.2
 app.get('/info', (request, response) => {
