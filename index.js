@@ -5,9 +5,9 @@ const morgan = require('morgan')
 const cors = require('cors')
 const Person = require('./models/person') // Tehtävä 3.13 tietokanta
 
-app.use(express.static('build')) // Tehtävä 3.11
-app.use(express.json())
 app.use(cors())
+app.use(express.json())
+app.use(express.static('build')) // Tehtävä 3.11
 
 // Tehtävä 3.7
 //app.use(morgan('tiny'))
@@ -33,7 +33,8 @@ app.use(morgan((tokens, request, response) => {
 
 // Tehtävä 3.16
 const errorHandler = (error, request, response, next) => {
-  console.error(error.message)
+  //console.error(error.message)
+  console.error(error.name)
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'ValidationError') {
@@ -43,7 +44,12 @@ const errorHandler = (error, request, response, next) => {
   //return response.status(500).json({ error: error.message }) // korjaus virheiden näyttämiseen
 }
 
-app.use(errorHandler)
+// Tehtävä 3.13: nimet tietokannasta
+app.get('/api/persons', (request, response) => {
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
+})
 
 // Tehtävä 3.14: lisää nimi tietokantaan
 app.post('/api/persons', (request, response, next) => {
@@ -76,14 +82,6 @@ app.put('/api/persons/:id', (request, response, next) => {
     .catch(error => next(error))
 })
 
-
-// Tehtävä 3.13: nimet tietokannasta
-app.get('/api/persons', (request, response) => {
-  Person.find({}).then(persons => {
-    response.json(persons)
-  })
-})
-
 // Tehtävä 3.15: poisto
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndRemove(request.params.id)
@@ -112,6 +110,8 @@ app.get('/api/persons/:id', (request, response, next) => {
     })
     .catch(error => next(error))
 })
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
